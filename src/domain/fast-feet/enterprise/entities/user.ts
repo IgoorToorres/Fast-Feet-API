@@ -66,6 +66,23 @@ export class User extends Entity<UserProps> {
     this.touch();
   }
 
+  changePassword(newPassword: string) {
+    this.props.password = newPassword;
+    this.touch();
+  }
+
+  validatePassword(password: string) {
+    return this.props.password === password;
+  }
+
+  isAdmin() {
+    return this.props.role.isAdmin();
+  }
+
+  isDeliveryPerson() {
+    return this.props.role.isDeliveryman();
+  }
+
   private touch() {
     this.props.updatedAt = new Date();
   }
