@@ -10,7 +10,7 @@ export interface NotificationProps {
   message: string;
   status: NotificationStatus;
   sentAt?: Date | null;
-  createdAt: Date;
+  createdAt?: Date;
 }
 
 export class Notification extends AggregateRoot<NotificationProps> {
@@ -23,7 +23,7 @@ export class Notification extends AggregateRoot<NotificationProps> {
       throw new Error('Invalid notification message');
     }
 
-    return new Notification(
+    const notification = new Notification(
       {
         ...props,
         type: props.type.trim(),
@@ -31,6 +31,12 @@ export class Notification extends AggregateRoot<NotificationProps> {
       },
       id,
     );
+
+    if (!notification.props.createdAt) {
+      notification.props.createdAt = new Date();
+    }
+
+    return notification;
   }
 
   get packageId() {

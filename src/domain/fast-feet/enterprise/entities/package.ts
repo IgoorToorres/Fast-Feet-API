@@ -14,7 +14,7 @@ export interface PackageProps {
   pickedUpAt?: Date | null;
   deliveredAt?: Date | null;
   returnedAt?: Date | null;
-  createdAt: Date;
+  createdAt?: Date;
   updatedAt?: Date;
 }
 
@@ -32,6 +32,10 @@ export class Package extends AggregateRoot<PackageProps> {
       },
       id,
     );
+
+    if (!packageEntity.props.createdAt) {
+      packageEntity.props.createdAt = new Date();
+    }
 
     if (!packageEntity.props.updatedAt) {
       packageEntity.props.updatedAt = new Date();
@@ -113,7 +117,7 @@ export class Package extends AggregateRoot<PackageProps> {
 
   markAsDelivered(
     deliveryPersonId: UniqueEntityID,
-    deliveryPhoto: DeliveryPhoto,
+    deliveryPhoto?: DeliveryPhoto | null,
   ) {
     if (!this.canBeDeliveredBy(deliveryPersonId)) {
       throw new Error(
@@ -121,19 +125,15 @@ export class Package extends AggregateRoot<PackageProps> {
       );
     }
 
-    if (this.requiresDeliveryPhoto(deliveryPhoto)) {
-      throw new Error('Delivery photo is required');
-    }
-
     this.props.status = PackageStatus.delivered();
-    this.props.deliveryPhoto = deliveryPhoto;
+    this.props.deliveryPhoto = deliveryPhoto ?? null;
     this.props.deliveredAt = new Date();
     this.touch();
   }
 
   markAsReturned() {
-    if (this.isDelivered()) {
-      throw new Error('Delivered package cannot be returned');
+    if (this.isDelivered() || this.isReturned()) {
+      throw new Error('Package cannot be returned from current status');
     }
 
     this.props.status = PackageStatus.returned();
@@ -147,6 +147,10 @@ export class Package extends AggregateRoot<PackageProps> {
   }
 
   removeDeliveryPerson() {
+    if (this.isDelivered()) {
+      throw new Error('Cannot remove delivery person from delivered package');
+    }
+
     this.props.deliveryPersonId = null;
     this.touch();
   }
@@ -162,8 +166,9 @@ export class Package extends AggregateRoot<PackageProps> {
     return this.props.deliveryPersonId.equals(deliveryPersonId);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   requiresDeliveryPhoto(deliveryPhoto?: DeliveryPhoto | null) {
-    return !deliveryPhoto;
+    return false;
   }
 
   isDelivered() {

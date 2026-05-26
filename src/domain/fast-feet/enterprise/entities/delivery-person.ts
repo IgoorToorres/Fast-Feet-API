@@ -10,13 +10,21 @@ export interface DeliveryPersonProps {
   cpf: CPF;
   currentLocation: CurrentLocation;
   status: DeliveryPersonStatus;
-  createdAt: Date;
+  createdAt?: Date;
   updatedAt?: Date;
 }
 
 export class DeliveryPerson extends AggregateRoot<DeliveryPersonProps> {
   static create(props: DeliveryPersonProps, id?: UniqueEntityID) {
+    if (!DeliveryPerson.isFilled(props.name)) {
+      throw new Error('Invalid delivery person name');
+    }
+
     const deliveryPerson = new DeliveryPerson(props, id);
+
+    if (!deliveryPerson.props.createdAt) {
+      deliveryPerson.props.createdAt = new Date();
+    }
 
     if (!deliveryPerson.props.updatedAt) {
       deliveryPerson.props.updatedAt = new Date();
@@ -54,6 +62,10 @@ export class DeliveryPerson extends AggregateRoot<DeliveryPersonProps> {
   }
 
   changeName(name: string) {
+    if (!DeliveryPerson.isFilled(name)) {
+      throw new Error('Invalid delivery person name');
+    }
+
     this.props.name = name;
     this.touch();
   }
@@ -87,5 +99,9 @@ export class DeliveryPerson extends AggregateRoot<DeliveryPersonProps> {
 
   private touch() {
     this.props.updatedAt = new Date();
+  }
+
+  private static isFilled(value: string) {
+    return value.trim().length > 0;
   }
 }

@@ -8,7 +8,7 @@ export interface RecipientProps {
   email: string;
   phone: string;
   address: Address;
-  createdAt: Date;
+  createdAt?: Date;
   updatedAt?: Date;
 }
 
@@ -33,6 +33,10 @@ export class Recipient extends AggregateRoot<RecipientProps> {
       },
       id,
     );
+
+    if (!recipient.props.createdAt) {
+      recipient.props.createdAt = new Date();
+    }
 
     if (!recipient.props.updatedAt) {
       recipient.props.updatedAt = new Date();
